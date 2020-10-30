@@ -1,0 +1,17 @@
+[package]
+name = "rusty-jeb"
+version = "0.1.0"
+authors = ["Patrick Amrein <amrein@ubique.ch>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jni = {version = "0.18.0", features = ["invocation"]}
+lazy_static =  "1.4.0"
+jni_macros = {version = "*", path = "./jni_macros"}
+clap = "3.0.0-beta.2"
+regex = "1.4.1"
+hex = "0.4.2"
+colored = "2"
+const_format = "0.2.8"
