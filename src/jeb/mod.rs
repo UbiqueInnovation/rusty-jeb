@@ -265,7 +265,7 @@ mod events {
     
     jclass!(JebDebugEvent, JebDebugEvent_);
     jclass!(JebDebugEventData, JebDebugEventData_);
-    use crate::jeb::com::pnfsoftware::jeb::util::events::{IEvent, IEventSource, JebEvent};
+    use crate::jeb::com::pnfsoftware::jeb::util::events::{IEvent};
    
     pub trait IDebuggerEventData<'a>: Instance {}
     pub trait IDebugEvent<'a>: IEvent<'a> {

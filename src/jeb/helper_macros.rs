@@ -1,4 +1,3 @@
-use jni_macros::{define_jclass, ClassFromStr, Instance};
 use crate::jeb::*;
 
 macro_rules! package_name {
@@ -8,7 +7,7 @@ macro_rules! package_name {
     };
 }
 
-#[allow(unused_macros)]
+
 macro_rules! jcall {
     ([$signature:expr][$concrete_type:expr]fn $fname:ident($($arg:ident : $typ:ty),*) -> $res:ty $conversion:block) => {
         fn $fname<'t>(&self,$($arg : $typ),*) -> Result<'t,$res> {
