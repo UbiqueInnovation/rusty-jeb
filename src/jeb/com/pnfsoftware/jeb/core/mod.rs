@@ -118,10 +118,9 @@ impl<'a> RuntimeProjectUtil<'a> {
 }
 
 impl<'a> Artifact<'a> {
-    pub fn new<'t>(file_name: String) -> Result<'t, Box<dyn IArtifact<'t> + 't>> {
+    pub fn new<'t>(file_name: &str) -> Result<'t, Box<dyn IArtifact<'t> + 't>> {
         let env = get_vm!();
-        let file_borrow = file_name.as_str();
-        let args = vec![jstring!(file_borrow)];
+        let args = vec![jstring!(file_name)];
         let obj = env.new_object("java/io/File", "(Ljava/lang/String;)V", &args)?;
 
         let file = file::File(obj.into());
@@ -137,7 +136,7 @@ impl<'a> Artifact<'a> {
 
         let mut args = jargs! {file_input};
 
-        args.insert(0, jstring! {file_borrow});
+        args.insert(0, jstring! {file_name});
         let res = env.new_object(Artifact_, ctor_sig, &args)?;
 
         Ok(Box::new(Artifact(res.into())))
