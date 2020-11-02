@@ -429,7 +429,8 @@ macro_rules! call {
         if let Ok(obj) = $obj.get_obj() {
            let res = call_object!(obj, $name, $signature, $args)?;
            let env = get_vm!();
-           if env.is_same_object(res.l()?, jni::objects::JObject::null())? {
+
+           if res.l().is_ok() && env.is_same_object(res.l()?, jni::objects::JObject::null())? {
             Err("Null pointer".into())
            } else {
             Ok(res)
