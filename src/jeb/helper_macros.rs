@@ -397,7 +397,12 @@ macro_rules! jcall {
 macro_rules! call_object {
     ($obj:expr, $name:expr, $signature:expr, $args:expr) => {{
         let env = get_vm!();
-        env.call_method($obj, $name, normalize!($signature), $args)
+        let obj = env.call_method($obj, $name, normalize!($signature), $args)?;
+        if is_null!(obj) {
+            Err("return value is null")
+        } else {
+            Ok(obj)
+        }
     }};
     ([String]$obj:expr, $name:expr, $signature:expr, $args:expr) => {{
         let env = get_vm!();
@@ -424,13 +429,25 @@ macro_rules! call_object {
     }};
 }
 
+macro_rules! is_null {
+    ($what:expr) => {
+        if let Ok(obj) = $what.l() {
+            let env = get_vm!();
+            env.is_same_object(obj, jni::objects::JObject::null())?
+        } else {
+            //non objects cannot be null
+            false
+        }
+    }
+}
+
 macro_rules! call {
     ($obj:expr, $name:expr, $signature:expr, $args:expr) => {
         if let Ok(obj) = $obj.get_obj() {
            let res = call_object!(obj, $name, $signature, $args)?;
            let env = get_vm!();
 
-           if res.l().is_ok() && env.is_same_object(res.l()?, jni::objects::JObject::null())? {
+           if is_null!(res) {
             Err("Null pointer".into())
            } else {
             Ok(res)
