@@ -1,3 +1,9 @@
+// Copyright (c) 2020 Patrick Amrein <amren@ubique.ch>
+// 
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 /// This example showcases the use of the JEB Debug API. For the initialization it follows the code
 /// found on the JEB github page.
 use std::{
