@@ -362,7 +362,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 Some("func_exit_bp") => {
                     let rest: Vec<&str> = cmd_args.collect();
-                    println!("Function-Exit-Breakpoint, return value: {}");
+                    println!("Function-Exit-Breakpoint, return value: {}", rest.join(" "));
                 }
                 // then the bp_hit event will be sent
                 Some("bp_hit") => {
