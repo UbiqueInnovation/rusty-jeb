@@ -81,6 +81,7 @@ pub trait IDebuggerThread: Instance {
 pub trait IDebuggerThreadStackFrame: Instance {
     fn getVariables(&self) -> Result<Vec<Box<dyn IDebuggerVariable + '_>>>;
     fn setVariable(&self, var: Option<&dyn IDebuggerVariable>) -> Result<bool>;
+    fn getInternalParameter(&self, idx : i32, type_information : &str) -> Result<Box<dyn IDebuggerVariable + '_>>;
 }
 pub trait IDebuggerVariable: Instance {
     fn getName(&self) -> Result<String>;
@@ -287,6 +288,10 @@ impl<'a> IDebuggerThreadStackFrame for DebuggerThreadStackFrame<'a> {
     fn setVariable(&self, var: Option<&dyn IDebuggerVariable>) -> Result<bool> {
         let args = jargs! {var};
         call!([Bool]self, "setVariable", normalize!("(Lcom.pnfsoftware.jeb.core.units.code.debug.IDebuggerVariable;)Z"), &args)
+    }
+    fn getInternalParameter(&self, idx : i32, type_information : &str) -> Result<Box<dyn IDebuggerVariable + '_ >> {
+        let res = call!(&self, "getInternalParameter", "(ILjava/lang/String;)Lcom.pnfsoftware.jeb.core.units.code.debug.IDebuggerVariable;", &[idx.into(), jstring!(type_information)])?;
+        box_ok!(DebuggerVariable(res))
     }
 }
 
