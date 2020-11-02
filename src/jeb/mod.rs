@@ -102,6 +102,9 @@ pub mod debug_events {
                             com::pnfsoftware::jeb::core::units::code::debug::DebuggerEventType::BreakpointFunctionExit => {
                                 let _ = self.3.send(format!("dbg tid {}", dbg_event_data.getThreadId().unwrap_or(0)));
                                 let _ = self.3.send(format!("dbg bp_hit {}",dbg_event_data.getAddress().unwrap_or_else(|_|"".to_string()) ));
+                                if let Ok(ret_val) =dbg_event_data.getReturnValue() {
+                                    let _ = self.3.send(format!("dbg func_exit_bp {}", ret_val.format().unwrap_or("".to_string())));
+                                } 
                             }
                             com::pnfsoftware::jeb::core::units::code::debug::DebuggerEventType::CodeLoad => {}
                             com::pnfsoftware::jeb::core::units::code::debug::DebuggerEventType::CodeUnload => {}

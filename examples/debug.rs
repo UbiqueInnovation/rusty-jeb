@@ -178,7 +178,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // via the jclass! macro. Have a look at the jni_macros folder on what exactly is generated,
     // or try cargo expand.
     let event_listener = DebugEventListener::new(debug_unit.as_ref(), &dex_unit, tx)?;
-    debug_unit.addListener(Some(event_listener.as_ref()))?;
+    debug_unit.insertListener(0, Some(event_listener.as_ref()))?;
 
     //so we are ready, make sure Android Studio is shut, and the process up and running (e.g. in the emulator)
     println!("Let's try to attach the debugger");
@@ -359,6 +359,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let thread_id = thread_id.parse().unwrap_or(0);
                         current_stopped_thread_id = Some(thread_id);
                     }
+                }
+                Some("func_exit_bp") => {
+                    let rest: Vec<&str> = cmd_args.collect();
+                    println!("Function-Exit-Breakpoint, return value: {}");
                 }
                 // then the bp_hit event will be sent
                 Some("bp_hit") => {

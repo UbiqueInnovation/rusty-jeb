@@ -8,7 +8,7 @@ pub mod code {
     package_name!("code");
     pub mod debug {
         package_name!("debug");
-        use crate::jeb::com::pnfsoftware::jeb::core::util::ITypedValue;
+        use crate::jeb::com::pnfsoftware::jeb::core::util::{ITypedValue, TypedVariable};
 
         pub mod impl_ {
             package_name!("impl");
@@ -167,7 +167,7 @@ pub mod code {
         pub trait IDebuggerEventData: Instance {
             fn getAddress(&self) -> Result<String>;
             fn getOutput(&self) -> Result<Vec<u8>>;
-            fn getReturnType(&self) -> Result<Box<dyn ITypedValue + '_>>;
+            fn getReturnValue(&self) -> Result<Box<dyn ITypedValue + '_>>;
             fn getThreadId(&self) -> Result<i64>;
             fn getType(&self) -> Result<DebuggerEventType>;
         }
@@ -283,8 +283,9 @@ pub mod code {
                 }
             }
 
-            fn getReturnType(&self) -> Result<Box<dyn ITypedValue + '_>> {
-                todo!()
+            fn getReturnValue(&self) -> Result<Box<dyn ITypedValue + '_>> {
+                let res = call!(self, "getReturnValue", "()Lcom.pnfsoftware.jeb.core.units.code.debug.ITypedValue;", &[])?;
+                box_ok!(TypedVariable(res))
             }
 
             fn getThreadId(&self) -> Result<i64> {
