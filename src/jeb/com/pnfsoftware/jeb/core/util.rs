@@ -52,6 +52,11 @@ pub trait IDebuggerUnit: Instance {
         &self,
         listener: Option<&dyn crate::jeb::debug_events::IDebugEventListener>,
     ) -> Result<()>;
+    fn insertListener(
+        &self,
+        index : i32,
+        listener: Option<&dyn crate::jeb::debug_events::IDebugEventListener>,
+    ) -> Result<()>;
 
     fn pause(&self) -> Result<bool>;
     fn getThreadById(&self, id: i64) -> Result<Box<dyn IDebuggerThread + '_>>;
@@ -422,6 +427,23 @@ impl<'a> IDebuggerUnit for JebDebuggerUnit<'a> {
             self.0.l()?,
             "addListener",
             normalize!("(Lcom.pnfsoftware.jeb.util.events.IEventListener;)V"),
+            &args,
+        )?;
+
+        Ok(())
+    }
+    fn insertListener(
+        &self,
+        index : i32,
+        listener: Option<&dyn crate::jeb::debug_events::IDebugEventListener>,
+    ) -> Result<()> {
+        let env = get_vm!();
+        let mut args = jargs! {listener};
+        args.insert(0, index.into());
+        env.call_method(
+            self.0.l()?,
+            "insertListener",
+            normalize!("(ILcom.pnfsoftware.jeb.util.events.IEventListener;)V"),
             &args,
         )?;
 

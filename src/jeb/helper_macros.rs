@@ -427,9 +427,16 @@ macro_rules! call_object {
 macro_rules! call {
     ($obj:expr, $name:expr, $signature:expr, $args:expr) => {
         if let Ok(obj) = $obj.get_obj() {
-           call_object!(obj, $name, $signature, $args)
+           let res = call_object!(obj, $name, $signature, $args)?;
+           let env = get_vm!();
+           if env.is_same_object(res.l()?, jni::objects::JObject::null())? {
+            Err("Null pointer".into())
+           } else {
+            Ok(res)
+           }
+           
         } else {
-            Err(jni::errors::Error::WrongJValueType("Expected JObject", ""))
+            Err("self is not an object")
         }
     };
     ([String]$obj:expr, $name:expr, $signature:expr, $args:expr) => {
