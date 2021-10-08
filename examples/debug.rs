@@ -28,7 +28,7 @@ use rusty_jeb::jeb::{
     com::pnfsoftware::jeb::core::util::setup_infos::DebuggerSetupInformation,
     com::pnfsoftware::jeb::core::util::DecompilerHelper,
     com::pnfsoftware::jeb::core::{
-        dao::impl_::{JEB2FileDatabase, SimpleFSFileStore},
+        dao::impl_::{JDB2Manager, SimpleFSFileStore},
         Artifact, JebCoreService,
     },
     org::apache::commons::configuration2::BaseConfiguration,
@@ -48,9 +48,10 @@ const PROJECT_FOLDER: &str = ".";
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     //just attach the current thread to the VM so the subsequent calls are NOPs
     let _ = VM.attach_current_thread_permanently()?;
-    let core_service = JebCoreService::getInstance(LICENSE_KEY)?;
+    let core_service = JebCoreService::getInstanceWithConfig(LICENSE_KEY, "192.168.178.117", 23477)?;
+    
     let file_store = SimpleFSFileStore::new(PROJECT_FOLDER)?;
-    let projectdb = JEB2FileDatabase::new(PROJECT_FOLDER)?;
+    let projectdb = JDB2Manager::new(PROJECT_FOLDER)?;
 
     let cfg = BaseConfiguration::new()?;
     let cfg = CommonsConfigurationWrapper::new(cfg)?;

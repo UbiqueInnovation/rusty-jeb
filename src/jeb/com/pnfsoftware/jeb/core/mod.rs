@@ -1,22 +1,21 @@
 // Copyright (c) 2020 Patrick Amrein <amren@ubique.ch>
-// 
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 package_name!("core");
 
-pub mod events;
-pub mod util;
-pub mod properties;
 pub mod dao;
-pub mod units;
+pub mod events;
 pub mod input;
+pub mod properties;
+pub mod units;
+pub mod util;
 
 use crate::jeb::*;
 
 use self::units::code::debug::{DebuggerUnitIdentifier, IDebuggerUnitIdentifier};
-
 
 pub trait IArtifact<'a>: Instance {}
 pub trait ICoreContext<'a>: Instance {
@@ -25,21 +24,14 @@ pub trait ICoreContext<'a>: Instance {
         data_provider: Option<&dyn dao::IDataProvider>,
         client_information: Option<&JebClientInformation>,
     ) -> Result<Box<dyn IEnginesContext + '_>>;
-    fn closeEnginesContext(
-        &self,
-        context: Option<&dyn IEnginesContext>,
-    ) -> Result<()>;
+    fn closeEnginesContext(&self, context: Option<&dyn IEnginesContext>) -> Result<()>;
 }
 pub trait IEnginesContext<'a>: Instance {
     fn loadProject(&self, str: &str) -> Result<Box<dyn IRuntimeProject + '_>>;
     fn unloadProject(&self, key: &str) -> Result<bool>;
-    fn getDebuggerUnitIdentifiers(
-        &self,
-    ) -> Result<Vec<Box<dyn IDebuggerUnitIdentifier + '_>>>;
-    fn isIdentifierEnabled(
-        &self,
-        identifier: Option<&dyn IDebuggerUnitIdentifier>,
-    ) -> Result<bool>;
+    fn getDebuggerUnitIdentifiers(&self) -> Result<Vec<Box<dyn IDebuggerUnitIdentifier + '_>>>;
+    fn isIdentifierEnabled(&self, identifier: Option<&dyn IDebuggerUnitIdentifier>)
+        -> Result<bool>;
     fn setIdentifierEnabled(
         &self,
         identifier: Option<&dyn IDebuggerUnitIdentifier>,
@@ -75,9 +67,7 @@ impl<'a> RuntimeProjectUtil<'a> {
         let res = env.call_static_method(
             RuntimeProjectUtil_,
             "getAllUnits",
-            normalize!(
-                "(Lcom.pnfsoftware.jeb.core.IRuntimeProject;)Ljava/util/List;"
-            ),
+            normalize!("(Lcom.pnfsoftware.jeb.core.IRuntimeProject;)Ljava/util/List;"),
             &args,
         )?;
         if let jni::objects::JValue::Object(array) = res {
@@ -107,7 +97,7 @@ impl<'a> RuntimeProjectUtil<'a> {
             normalize!(
                 "(Lcom.pnfsoftware.jeb.core.IRuntimeProject;Ljava.lang.Class;Z)Ljava/util/List;"
             ),
-            &args
+            &args,
         )?;
         if let jni::objects::JValue::Object(array) = res {
             let list = jni::objects::JList::from_env(&env, array)?;
@@ -152,9 +142,7 @@ impl<'a> Artifact<'a> {
 impl<'a> IArtifact<'a> for Artifact<'a> {}
 
 impl<'a> JebCoreService<'a> {
-    pub fn getInstance<'t>(
-        license_key: &'t str,
-    ) -> Result<Box<dyn ICoreContext + 't>> {
+    pub fn getInstance<'t>(license_key: &'t str) -> Result<Box<dyn ICoreContext + 't>> {
         let env = VM.attach_current_thread_permanently()?;
         let license_key: jni::objects::JString = env.new_string(license_key)?;
         let args: Vec<jni::objects::JValue> = vec![license_key.into()];
@@ -162,6 +150,47 @@ impl<'a> JebCoreService<'a> {
             JebCoreService_,
             "getInstance",
             "(Ljava/lang/String;)Lcom/pnfsoftware/jeb/core/ICoreContext;",
+            &args,
+        )?;
+
+        Ok(Box::new(JebCoreService(res)))
+    }
+    pub fn getInstanceWithConfig<'t>(
+        license_key: &'t str,
+        addr: &'t str,
+        port: i32,
+    ) -> Result<'t,Box<dyn ICoreContext<'t> + 't>> {
+        let env = VM.attach_current_thread_permanently()?;
+        let license_key: jni::objects::JString = env.new_string(license_key)?;
+        let addr: jni::objects::JString = env.new_string(addr)?;
+        let core_options: jni::objects::JValue = env.call_static_method(
+            "com/pnfsoftware/jeb/core/CoreOptions",
+            "getDefault",
+            "()Lcom/pnfsoftware/jeb/core/CoreOptions;",
+            &vec![],
+        )?;
+        
+        let controller_address: jni::objects::JObject = env.new_object(
+            "java/net/InetSocketAddress",
+            "(Ljava/lang/String;I)V",
+            &vec![addr.into(), port.into()],
+        ).unwrap();
+        let controller_info: jni::objects::JObject = env.new_object(
+            "com/pnfsoftware/jeb/core/ControllerInfo",
+            "(Ljava/net/InetSocketAddress;I)V",
+            &vec![controller_address.into(), 0.into()],
+        ).unwrap();
+        env.call_method(
+            core_options.l().unwrap(),
+            "setControllerInfo",
+            "(Lcom/pnfsoftware/jeb/core/ControllerInfo;)V",
+            &vec![controller_info.into()],
+        )?;
+        let args: Vec<jni::objects::JValue> = vec![license_key.into(), core_options.into()];
+        let res = env.call_static_method(
+            JebCoreService_,
+            "getInstance",
+            "(Ljava/lang/String;Lcom/pnfsoftware/jeb/core/CoreOptions;)Lcom/pnfsoftware/jeb/core/ICoreContext;",
             &args,
         )?;
 
@@ -198,7 +227,14 @@ impl<'a> IRuntimeProject<'a> for JebRuntimeProject<'a> {
         let env = get_vm!();
         let args = jargs!(artifact);
 
-        let res = env.call_method(self.0.l()?, "processArtifact", normalize!("(Lcom.pnfsoftware.jeb.core.IArtifact;)Lcom.pnfsoftware.jeb.core.ILiveArtifact;"), &args)?;
+        let res = env.call_method(
+            self.0.l()?,
+            "processArtifact",
+            normalize!(
+                "(Lcom.pnfsoftware.jeb.core.IArtifact;)Lcom.pnfsoftware.jeb.core.ILiveArtifact;"
+            ),
+            &args,
+        )?;
         Ok(Box::new(JebLiveArtifact(res)))
     }
     fn getKey(&self) -> Result<String> {
@@ -218,9 +254,7 @@ impl<'a> IEnginesContext<'a> for JebEnginesContext<'a> {
         let res = env.call_method(
             self.0.l()?,
             "loadProject",
-            normalize!(
-                "(Ljava/lang/String;)Lcom.pnfsoftware.jeb.core.IRuntimeProject;"
-            ),
+            normalize!("(Ljava/lang/String;)Lcom.pnfsoftware.jeb.core.IRuntimeProject;"),
             &args,
         )?;
         Ok(Box::new(JebRuntimeProject(res)))
@@ -270,10 +304,7 @@ impl<'a> ICoreContext<'a> for JebCoreService<'a> {
         Ok(Box::new(JebEnginesContext { 0: res }))
     }
 
-    fn closeEnginesContext<'t>(
-        &self,
-        context: Option<&dyn IEnginesContext>,
-    ) -> Result<()> {
+    fn closeEnginesContext<'t>(&self, context: Option<&dyn IEnginesContext>) -> Result<()> {
         let args: Vec<jni::objects::JValue> = jargs!(context);
         call!(
             self,

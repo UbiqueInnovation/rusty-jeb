@@ -20,7 +20,7 @@ pub mod impl_ {
 
     jclass! {SimpleFSFileStore, SimpleFSFileStore_}
 
-    jclass! {JEB2FileDatabase, JEB2FileDatabase_}
+    jclass! {JDB2Manager, JDB2Manager_}
 
     jclass! {DataProvider, DataProvider_}
 
@@ -28,10 +28,10 @@ pub mod impl_ {
 
     jclass! {AppDatabase, AppDatabase_}
 
-    impl<'a> JEB2FileDatabase<'a> {
+    impl<'a> JDB2Manager<'a> {
         constructor! {
-            Box[JEB2FileDatabase,
-                JEB2FileDatabase_,
+            Box[JDB2Manager,
+                JDB2Manager_,
                 "java/lang/String"]
                 (base_dir : &str) => Box<dyn IFileDatabase<'a> + 'a> {
                     vec![jstring!(base_dir)]
@@ -68,6 +68,6 @@ pub mod impl_ {
     }
 
     impl<'a> IFileStore<'a> for SimpleFSFileStore<'a> {}
-    impl<'a> IFileDatabase<'a> for JEB2FileDatabase<'a> {}
+    impl<'a> IFileDatabase<'a> for JDB2Manager<'a> {}
     impl<'a> IDataProvider<'a> for DataProvider<'a> {}
 }
