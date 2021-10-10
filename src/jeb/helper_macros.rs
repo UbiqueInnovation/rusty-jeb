@@ -375,6 +375,34 @@ macro_rules! jcall {
             }
         }
     };
+    (Vec<$interface:tt>[$concrete_type:expr]fn $fname:ident($($arg:ident : $typ:ty),*) -> $res:ty $conversion:block) => {
+        fn $fname(&self,$($arg : $typ),*) -> Result<Vec<Box<dyn $interface + '_>>> {
+            let env = VM.attach_current_thread_permanently()?;
+            let args = $conversion;
+            if let jni::objects::JValue::Object(obj) = self.get_obj()?.into(){
+                let result = env.call_method(obj,stringify!($fname),"()Ljava/util/List;", &args)?.into();
+                if let jni::objects::JValue::Object(array) = result {
+                    let list = jni::objects::JList::from_env(&env, array)?;
+                    let mut result : Vec<Box<dyn $interface + '_>> = vec![];
+                    for element in list.iter()? {
+                        result.push(
+                            Box::new(
+                                $concrete_type(
+                                    element.into()
+                                )
+                            )
+                        )
+                    }
+                    Ok(result)
+                } else {
+                    Err("return type is not a object".into())
+                }
+
+            } else {
+                Err("Instance is not object".into())
+            }
+        }
+    };
     (Box[$signature:expr][$concrete_type:ty]$fname:ident($($arg:ident : $typ:ty),*) -> $res:ty $conversion:block) => {
         pub fn $fname($($arg : $typ),*) -> Result<()> {
             let env = VM.attach_current_thread_permanently()?

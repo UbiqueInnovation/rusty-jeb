@@ -86,6 +86,7 @@ pub trait IDebuggerThread: Instance {
 }
 pub trait IDebuggerThreadStackFrame: Instance {
     fn getVariables(&self) -> Result<Vec<Box<dyn IDebuggerVariable + '_>>>;
+    fn getDebugVariables(&self, only_debug: bool) -> Result<Vec<Box<dyn IDebuggerVariable + '_>>>;
     fn setVariable(&self, var: Option<&dyn IDebuggerVariable>) -> Result<bool>;
     fn getInternalParameter(&self, idx : i32, type_information : &str) -> Result<Box<dyn IDebuggerVariable + '_>>;
 }
@@ -289,6 +290,14 @@ impl<'a> IDebuggerThreadStackFrame for DebuggerThreadStackFrame<'a> {
         Vec<IDebuggerVariable>
         [DebuggerVariable]
         fn getVariables()
+    }
+
+    jcall! {
+        Vec<IDebuggerVariable>
+        [DebuggerVariable]
+        fn getDebugVariables(only_debug: bool) -> Vec<Box<dyn IDebuggerVariable + '_>> {
+            vec![only_debug.into()]
+        }
     }
 
     fn setVariable(&self, var: Option<&dyn IDebuggerVariable>) -> Result<bool> {

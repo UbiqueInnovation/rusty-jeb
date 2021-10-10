@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Patrick Amrein <amren@ubique.ch>
-// 
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -48,8 +48,9 @@ const PROJECT_FOLDER: &str = ".";
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     //just attach the current thread to the VM so the subsequent calls are NOPs
     let _ = VM.attach_current_thread_permanently()?;
-    let core_service = JebCoreService::getInstanceWithConfig(LICENSE_KEY, "192.168.178.117", 23477)?;
-    
+    let core_service =
+        JebCoreService::getInstanceWithConfig(LICENSE_KEY, "192.168.178.117", 23477)?;
+
     let file_store = SimpleFSFileStore::new(PROJECT_FOLDER)?;
     let projectdb = JDB2Manager::new(PROJECT_FOLDER)?;
 
@@ -325,18 +326,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("Local StackFrame\n");
                     // this is analogous to the set command. We get the top level stack frame via the thread
                     if let Ok(frames) = thread.getFrames() {
+                        println!("got frames");
                         if let Some(frame) = frames.first() {
-                            if let Ok(variables) = &frame.getVariables() {
+                            println!("get current frame");
+                            if let Ok(variables) = &frame.getVariables()  {
+                                println!("get {} variables", variables.len());
                                 for var in variables {
-                                    let ty = var.getTypedValue()?;
-                                    //try dereference but only if the value is a valid pointer
-                                    // since getVariables crashes if the typehint is set to the wrong type
-                                    // we check here that we at least only allow values above 0x12000000
-                                    // ideally one would get the correct base_address of the Java heap
-                                    if &ty.getTypeName()? == "int" {
-                                        let ptr: ValueInteger = ty.as_ref().into();
-                                        if ptr.getValue()? > 0x12000000 {
-                                            var.setTypeHint("string")?;
+                                    if let Ok(ty) = var.getTypedValue() {
+                                        //try dereference but only if the value is a valid pointer
+                                        // since getVariables crashes if the typehint is set to the wrong type
+                                        // we check here that we at least only allow values above 0x12000000
+                                        // ideally one would get the correct base_address of the Java heap
+                                        if let Ok(typename) = &ty.getTypeName() {
+                                            if typename == "int" {
+                                                let ptr: ValueInteger = ty.as_ref().into();
+                                                if ptr.getValue()? > 0x12000000 {
+                                                    var.setTypeHint("string")?;
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -345,8 +352,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             // note that we only get the correct typedvalues if we iterate over all variables again.
                             if let Ok(variables) = &frame.getVariables() {
                                 for var in variables {
-                                    println!("{}", var.format()?.yellow());
-                                    var.setTypeHint("int")?;
+                                    if let Ok(format) = var.format() {
+                                        println!("{}", format.yellow());
+                                        let _ = var.setTypeHint("int");
+                                    }
                                 }
                             }
                         }
